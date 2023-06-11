@@ -1,13 +1,14 @@
 #include "SevSeg.h"
 
 const int MAX_POTENTIOMETER_VAL = 1023;
+const unsigned long buttonCooldownDuration = 1000;  // 1 second cooldown
 
 SevSeg sevseg; 
 
-
+//onHold -> not setting timer, not onHold -> setting timer
 bool isOnHold = true;
 bool isButtonOnCoolDown = false;
-
+unsigned long buttonCooldownStartTime = 0;
 
 int displayNumber = 0;
 bool halfHourDisplay = false;
@@ -54,8 +55,9 @@ void loop() {
     if (buttonState == LOW && !isButtonOnCoolDown) {
         isButtonOnCoolDown = true;
         isOnHold = false;
+        buttonCooldownStartTime = millis();
         digitalWrite(11, HIGH);
-        delay(200);
+        delay(150);
     }
     
   }else{
@@ -77,14 +79,20 @@ void loop() {
     if (buttonState == LOW && !isButtonOnCoolDown) {
         isButtonOnCoolDown = true;
         //Serial.println("Button is pressed");
+        buttonCooldownStartTime = millis(); 
         digitalWrite(11, HIGH);
         isOnHold = true;
-        delay(200);
+        delay(150);
+
+
+        //IR LOGIC
     }
     
   }
 
-  
+  if (isButtonOnCoolDown && (millis() - buttonCooldownStartTime >= buttonCooldownDuration)) {
+    isButtonOnCoolDown = false;  // Reset the button cooldown flag
+  }
 
   delay(10);  // delay in between reads for stability
 }
