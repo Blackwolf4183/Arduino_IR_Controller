@@ -4,7 +4,10 @@ const int MAX_POTENTIOMETER_VAL = 1023;
 
 SevSeg sevseg; 
 
-bool isOnHold = false;
+
+bool isOnHold = true;
+bool isButtonOnCoolDown = false;
+
 
 int displayNumber = 0;
 bool halfHourDisplay = false;
@@ -30,15 +33,35 @@ void setup() {
   pinMode(11,OUTPUT);
   digitalWrite(11, LOW);
 
+
+
 }
 
 void loop() {
 
+  byte buttonState = digitalRead(10);
+
   if (isOnHold){
 
-  }else{
-      
+    sevseg.blank();
+    sevseg.refreshDisplay();    
 
+    //CLEAR POINT
+    digitalWrite(9, LOW);
+    //clear buzzer
+    digitalWrite(11, LOW);
+
+    if (buttonState == LOW && !isButtonOnCoolDown) {
+        isButtonOnCoolDown = true;
+        isOnHold = false;
+        digitalWrite(11, HIGH);
+        delay(200);
+    }
+    
+  }else{
+    
+    //stop buzzer
+    digitalWrite(11, LOW);
     readPotentiometer();
     //Display
 
@@ -51,14 +74,14 @@ void loop() {
 
     byte buttonState = digitalRead(10);
     
-    if (buttonState == LOW) {
-        Serial.println("Button is pressed");
+    if (buttonState == LOW && !isButtonOnCoolDown) {
+        isButtonOnCoolDown = true;
+        //Serial.println("Button is pressed");
         digitalWrite(11, HIGH);
+        isOnHold = true;
+        delay(200);
     }
-    else {
-        Serial.println("Button is not pressed");
-        digitalWrite(11, LOW);
-    }
+    
   }
 
   
