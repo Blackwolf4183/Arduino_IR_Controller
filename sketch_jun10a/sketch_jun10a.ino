@@ -8,10 +8,17 @@ SevSeg sevseg;
 //onHold -> not setting timer, not onHold -> setting timer
 bool isOnHold = true;
 bool isButtonOnCoolDown = false;
+//boolean to indicate if timer is currently "running"
+bool isTimerRunning = false;
 unsigned long buttonCooldownStartTime = 0;
+
+//timer for ir activation
+unsigned long timerStartTime = 0;
+unsigned long desiredTimerDuration;
 
 int displayNumber = 0;
 bool halfHourDisplay = false;
+
 
 void setup() {
   // put your setup code here, to run once:
@@ -44,7 +51,13 @@ void loop() {
 
   if (isOnHold){
 
-    sevseg.blank();
+  
+    if(isTimerRunning){
+      sevseg.setChars("-");
+    }else{
+      sevseg.blank();
+    }
+    
     sevseg.refreshDisplay();    
 
     //CLEAR POINT
@@ -78,20 +91,48 @@ void loop() {
     
     if (buttonState == LOW && !isButtonOnCoolDown) {
         isButtonOnCoolDown = true;
-        //Serial.println("Button is pressed");
+        Serial.println("Button is pressed");
         buttonCooldownStartTime = millis(); 
+
+        //make buzzer sound
         digitalWrite(11, HIGH);
-        isOnHold = true;
-        delay(150);
+        
 
 
         //IR LOGIC
+        if( halfHourDisplay || displayNumber != 0){
+          Serial.println("Enters TIMER SET");
+          //set a timer for the desired amout of time
+          if(halfHourDisplay){
+            desiredTimerDuration = (displayNumber + 0.5) * 60 * 60  * 1000;
+          }else{
+
+            desiredTimerDuration = (displayNumber + 0.0) * 60 * 60  * 1000;
+          }
+          Serial.print("SE HA ESTABLECIDO UN TIMER CON DURACION: ");
+          Serial.println(desiredTimerDuration);
+          timerStartTime = millis();
+          isTimerRunning = true;
+        }
+
+        isOnHold = true;
+        delay(150);
     }
     
   }
 
   if (isButtonOnCoolDown && (millis() - buttonCooldownStartTime >= buttonCooldownDuration)) {
     isButtonOnCoolDown = false;  // Reset the button cooldown flag
+  }
+
+  // Check if the timer duration has passed
+  if (timerStartTime != 0 && (millis() - timerStartTime >= desiredTimerDuration)) {
+    timerStartTime = 0;  
+    // IR ACTIVATION HERE
+    Serial.println("TIMER ACTIVATED");
+    //RESET EVERY OTHER THING
+    isOnHold = true;
+    isTimerRunning = false;
   }
 
   delay(10);  // delay in between reads for stability
