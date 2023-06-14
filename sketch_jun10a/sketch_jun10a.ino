@@ -1,9 +1,13 @@
 #include "SevSeg.h"
+#include <IRLibSendBase.h>
+#include <IRLib_HashRaw.h>
+//#include "./data.h"
 
 const int MAX_POTENTIOMETER_VAL = 1023;
 const unsigned long buttonCooldownDuration = 1000;  // 1 second cooldown
 
 SevSeg sevseg; 
+IRsendRaw mySender;
 
 //onHold -> not setting timer, not onHold -> setting timer
 bool isOnHold = true;
@@ -20,13 +24,20 @@ int displayNumber = 0;
 bool halfHourDisplay = false;
 
 
+#define RAW_DATA_LEN 48
+uint16_t rawData[RAW_DATA_LEN]={
+    1301, 362, 1279, 383, 447, 1215, 447, 1215, 469, 1194, 469, 1194, 447, 1194, 469, 1194,
+    1301, 362, 469, 1194, 469, 1194, 469, 7957, 1301, 362, 1279, 383, 447, 1215, 469, 1194,
+    469, 1194, 447, 1215, 447, 1215, 447, 1194, 1301, 383, 469, 1194, 469, 1194, 469 // Add the remaining codes
+  };
+
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
 
   byte numDigits = 1;
   byte digitPins[] = {};
-  byte segmentPins[] = {6, 5, 2, 3, 4, 7, 8};
+  byte segmentPins[] = {6, 5, 2, 12, 4, 7, 8};
   bool resistorsOnSegments = true;
 
   byte hardwareConfig = COMMON_CATHODE; 
@@ -71,6 +82,11 @@ void loop() {
         buttonCooldownStartTime = millis();
         digitalWrite(11, HIGH);
         delay(150);
+
+        //TODO: REMOVE
+        //testing to turn of the lights
+        Serial.println("Sending ir");
+        mySender.send(rawData, RAW_DATA_LEN, 38);
     }
     
   }else{
